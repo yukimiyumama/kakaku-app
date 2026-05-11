@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="価格比較">
+<meta name="theme-color" content="#1a1a2e">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>価格比較アプリ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f0f1a;
+  --bg2: #1a1a2e;
+  --bg3: #16213e;
+  --card: #1e1e35;
+  --card2: #252545;
+  --accent: #7c6ef7;
+  --accent2: #a594f9;
+  --green: #4ade80;
+  --amber: #fbbf24;
+  --red: #f87171;
+  --text: #f0f0ff;
+  --text2: #9090b8;
+  --text3: #5555808;
+  --border: rgba(124,110,247,0.2);
+  --border2: rgba(255,255,255,0.08);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --safe-top: env(safe-area-inset-top, 44px);
+  --safe-bottom: env(safe-area-inset-bottom, 34px);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: 'Noto Sans JP', sans-serif; }
+
+.app {
+  display: flex; flex-direction: column; height: 100%;
+  padding-top: var(--safe-top);
+  padding-bottom: var(--safe-bottom);
+}
+
+/* Status bar area */
+.status-area {
+  background: var(--bg2);
+  padding: 12px 20px 0;
+}
+.app-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-bottom: 12px;
+}
+.app-name {
+  font-size: 20px; font-weight: 700; letter-spacing: -0.5px;
+  background: linear-gradient(135deg, var(--accent2), #c4b5fd);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.add-btn {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--accent); border: none; color: #fff;
+  font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: transform 0.15s, opacity 0.15s;
+}
+.add-btn:active { transform: scale(0.9); opacity: 0.8; }
+
+/* Tab bar */
+.tab-bar {
+  display: flex; gap: 4px; padding: 0 16px 12px;
+  background: var(--bg2);
+}
+.tab-btn {
+  flex: 1; padding: 8px 0; border: none; border-radius: var(--radius-sm);
+  font-family: 'Noto Sans JP', sans-serif; font-size: 12px; font-weight: 500;
+  cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column;
+  align-items: center; gap: 2px; background: transparent; color: var(--text2);
+}
+.tab-btn.active {
+  background: rgba(124,110,247,0.2); color: var(--accent2);
+}
+.tab-icon { font-size: 20px; }
+
+/* Content */
+.content { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px; }
+
+.section { display: none; }
+.section.active { display: block; }
+
+/* Scan section */
+.scan-box {
+  background: var(--card); border-radius: var(--radius); overflow: hidden;
+  margin-bottom: 16px; border: 1px solid var(--border);
+}
+.camera-preview {
+  position: relative; background: #000; aspect-ratio: 4/3;
+  display: flex; align-items: center; justify-content: center;
+}
+#camera-video { width: 100%; height: 100%; object-fit: cover; display: none; }
+#camera-video.active { display: block; }
+.camera-overlay {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  pointer-events: none;
+}
+.scan-frame {
+  width: 200px; height: 120px; border: 2px solid var(--accent);
+  border-radius: 8px; box-shadow: 0 0 0 2000px rgba(0,0,0,0.5);
+  position: relative;
+}
+.scan-line {
+  position: absolute; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  animation: scan 1.5s ease-in-out infinite;
+}
+@keyframes scan { 0%,100% { top: 10%; } 50% { top: 80%; } }
+.camera-placeholder {
+  text-align: center; padding: 32px 24px; color: var(--text2);
+}
+.camera-placeholder-icon { font-size: 48px; margin-bottom: 12px; }
+.cam-start-btn {
+  background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm);
+  padding: 12px 24px; font-family: 'Noto Sans JP', sans-serif; font-size: 15px; font-weight: 500;
+  cursor: pointer; width: 100%; margin-top: 12px; transition: opacity 0.15s;
+}
+.cam-start-btn:active { opacity: 0.8; }
+.scan-input-row {
+  display: flex; gap: 8px; padding: 12px;
+}
+.scan-input {
+  flex: 1; background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--radius-sm);
+  color: var(--text); font-family: 'DM Mono', monospace; font-size: 14px;
+  padding: 10px 12px; outline: none;
+}
+.scan-input:focus { border-color: var(--accent); }
+.scan-go-btn {
+  background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm);
+  padding: 10px 16px; font-size: 14px; cursor: pointer; font-weight: 500;
+  font-family: 'Noto Sans JP', sans-serif; white-space: nowrap;
+  transition: opacity 0.15s;
+}
+.scan-go-btn:active { opacity: 0.8; }
+
+/* Result card */
+.result-card {
+  background: var(--card); border-radius: var(--radius); border: 1px solid var(--border);
+  overflow: hidden; animation: slideUp 0.3s ease;
+}
+@keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+.result-header { padding: 14px 16px; border-bottom: 1px solid var(--border2); }
+.result-name { font-size: 16px; font-weight: 700; color: var(--text); }
+.result-barcode { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text2); margin-top: 3px; }
+.result-memo { font-size: 12px; color: var(--accent2); margin-top: 3px; }
+
+.price-rows { padding: 8px 0; }
+.price-row {
+  display: flex; align-items: center; padding: 10px 16px; gap: 12px;
+  border-bottom: 1px solid var(--border2); transition: background 0.15s;
+}
+.price-row:last-child { border-bottom: none; }
+.price-row:active { background: var(--card2); }
+.price-row.best { background: rgba(74,222,128,0.05); }
+.store-name { flex: 1; font-size: 14px; font-weight: 500; color: var(--text); }
+.price-col { text-align: right; }
+.price-regular { font-size: 11px; color: var(--text2); }
+.price-strike { text-decoration: line-through; }
+.price-final { font-size: 15px; font-weight: 700; font-family: 'DM Mono', monospace; color: var(--text); }
+.price-final.best-price { color: var(--green); }
+.best-badge {
+  background: rgba(74,222,128,0.15); color: var(--green); font-size: 10px;
+  font-weight: 700; padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(74,222,128,0.3);
+}
+.coupon-badge {
+  background: rgba(251,191,36,0.15); color: var(--amber); font-size: 10px;
+  font-weight: 700; padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(251,191,36,0.3);
+}
+
+.not-found {
+  background: var(--card); border-radius: var(--radius); border: 1px solid var(--border);
+  padding: 32px 16px; text-align: center; color: var(--text2); animation: slideUp 0.3s ease;
+}
+.not-found-icon { font-size: 36px; margin-bottom: 10px; }
+.not-found p { font-size: 14px; line-height: 1.6; }
+.add-from-scan {
+  margin-top: 14px; background: var(--card2); color: var(--accent2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 10px 20px; font-family: 'Noto Sans JP', sans-serif;
+  font-size: 14px; cursor: pointer; width: 100%; font-weight: 500;
+}
+
+/* List section */
+.product-item {
+  background: var(--card); border-radius: var(--radius); border: 1px solid var(--border2);
+  padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px;
+  cursor: pointer; transition: all 0.15s; animation: slideUp 0.25s ease;
+}
+.product-item:active { background: var(--card2); transform: scale(0.99); }
+.product-item-icon {
+  width: 44px; height: 44px; background: rgba(124,110,247,0.15); border-radius: 12px;
+  display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0;
+}
+.product-item-info { flex: 1; min-width: 0; }
+.product-item-name { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.product-item-barcode { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text2); margin-top: 2px; }
+.product-item-prices { text-align: right; }
+.price-range-min { font-size: 15px; font-weight: 700; font-family: 'DM Mono', monospace; color: var(--green); }
+.price-range-label { font-size: 10px; color: var(--text2); }
+.price-range-max { font-size: 12px; color: var(--text2); font-family: 'DM Mono', monospace; }
+.chevron { color: var(--text2); font-size: 18px; }
+.empty-state { text-align: center; padding: 60px 24px; color: var(--text2); }
+.empty-icon { font-size: 48px; margin-bottom: 16px; }
+.empty-text { font-size: 15px; line-height: 1.7; }
+
+/* Add section */
+.form-card {
+  background: var(--card); border-radius: var(--radius); border: 1px solid var(--border2);
+  padding: 16px; margin-bottom: 14px;
+}
+.form-section-title {
+  font-size: 12px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;
+  color: var(--accent2); margin-bottom: 14px;
+}
+.form-group { margin-bottom: 12px; }
+.form-group:last-child { margin-bottom: 0; }
+.form-label { font-size: 12px; color: var(--text2); margin-bottom: 5px; display: block; }
+.form-input {
+  width: 100%; background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--radius-sm);
+  color: var(--text); font-family: 'Noto Sans JP', sans-serif; font-size: 15px;
+  padding: 11px 14px; outline: none; transition: border-color 0.2s;
+}
+.form-input:focus { border-color: var(--accent); }
+.form-input.mono { font-family: 'DM Mono', monospace; }
+
+.store-card {
+  background: var(--bg3); border-radius: var(--radius-sm); border: 1px solid var(--border2);
+  padding: 12px; margin-bottom: 8px;
+}
+.store-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.store-card-name { flex: 1; background: transparent; border: none; border-bottom: 1px solid var(--border2); color: var(--text); font-family: 'Noto Sans JP', sans-serif; font-size: 14px; font-weight: 500; padding: 4px 0; outline: none; }
+.store-card-name:focus { border-color: var(--accent); }
+.remove-store-btn { color: var(--text2); background: none; border: none; font-size: 20px; cursor: pointer; padding: 4px; line-height: 1; }
+.store-price-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.price-input-wrap { }
+.price-input-label { font-size: 11px; color: var(--text2); margin-bottom: 4px; }
+.price-input {
+  width: 100%; background: var(--card); border: 1px solid var(--border2);
+  border-radius: 8px; color: var(--text); font-family: 'DM Mono', monospace;
+  font-size: 14px; padding: 8px 10px; outline: none;
+}
+.price-input:focus { border-color: var(--accent); }
+
+.add-store-btn {
+  width: 100%; background: transparent; border: 1px dashed var(--border);
+  border-radius: var(--radius-sm); color: var(--accent2); font-family: 'Noto Sans JP', sans-serif;
+  font-size: 14px; padding: 11px; cursor: pointer; transition: background 0.15s;
+}
+.add-store-btn:active { background: rgba(124,110,247,0.1); }
+
+.save-btn {
+  width: 100%; background: var(--accent); color: #fff; border: none;
+  border-radius: var(--radius); padding: 16px; font-family: 'Noto Sans JP', sans-serif;
+  font-size: 16px; font-weight: 700; cursor: pointer; transition: opacity 0.15s;
+  margin-top: 4px;
+}
+.save-btn:active { opacity: 0.8; }
+
+.toast {
+  position: fixed; bottom: calc(90px + var(--safe-bottom)); left: 50%; transform: translateX(-50%) translateY(20px);
+  background: var(--green); color: #000; font-weight: 700; font-size: 14px;
+  padding: 10px 22px; border-radius: 99px; opacity: 0; transition: all 0.3s;
+  pointer-events: none; white-space: nowrap; z-index: 100;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* Bottom tab bar */
+.bottom-nav {
+  background: var(--bg2); border-top: 1px solid var(--border2);
+  display: flex; padding: 8px 0;
+}
+.nav-btn {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+  background: none; border: none; cursor: pointer; padding: 4px 0;
+  font-family: 'Noto Sans JP', sans-serif; font-size: 10px; color: var(--text2);
+  transition: color 0.2s;
+}
+.nav-btn.active { color: var(--accent2); }
+.nav-icon { font-size: 24px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="status-area">
+    <div class="app-header">
+      <span class="app-name">🐾 価格比較</span>
+      <button class="add-btn" onclick="goAdd()" aria-label="商品を追加">＋</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- スキャン -->
+    <div id="sec-scan" class="section active">
+      <div class="scan-box">
+        <div class="camera-preview">
+          <video id="camera-video" playsinline autoplay></video>
+          <div class="camera-overlay" id="cam-overlay" style="display:none">
+            <div class="scan-frame"><div class="scan-line"></div></div>
+          </div>
+          <div class="camera-placeholder" id="cam-placeholder">
+            <div class="camera-placeholder-icon">📷</div>
+            <div style="font-size:14px;color:var(--text2)">バーコードをスキャン</div>
+            <button class="cam-start-btn" onclick="startCamera()">カメラを起動する</button>
+          </div>
+        </div>
+        <div class="scan-input-row">
+          <input class="scan-input" id="bc-input" type="text" inputmode="numeric" placeholder="バーコード番号を入力…" onkeydown="if(event.key==='Enter')doSearch()">
+          <button class="scan-go-btn" onclick="doSearch()">検索</button>
+        </div>
+      </div>
+      <div id="scan-result"></div>
+    </div>
+
+    <!-- 一覧 -->
+    <div id="sec-list" class="section">
+      <div id="product-list"></div>
+    </div>
+
+    <!-- 追加 -->
+    <div id="sec-add" class="section">
+      <div class="form-card">
+        <div class="form-section-title">商品情報</div>
+        <div class="form-group">
+          <label class="form-label">バーコード番号</label>
+          <input class="form-input mono" id="f-barcode" type="text" inputmode="numeric" placeholder="例: 4901301371966">
+        </div>
+        <div class="form-group">
+          <label class="form-label">商品名</label>
+          <input class="form-input" id="f-name" type="text" placeholder="例: 猫砂 まとまる木のチップ 7L">
+        </div>
+        <div class="form-group">
+          <label class="form-label">メモ（種類・容量など）</label>
+          <input class="form-input" id="f-memo" type="text" placeholder="例: 固まるタイプ">
+        </div>
+      </div>
+
+      <div class="form-card">
+        <div class="form-section-title">店舗別価格</div>
+        <div id="store-list"></div>
+        <button class="add-store-btn" onclick="addStoreRow()">＋ 店舗を追加</button>
+      </div>
+
+      <button class="save-btn" onclick="saveProduct()">💾 保存する</button>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <button class="nav-btn active" id="nav-scan" onclick="switchTab('scan')">
+      <span class="nav-icon">📷</span>スキャン
+    </button>
+    <button class="nav-btn" id="nav-list" onclick="switchTab('list')">
+      <span class="nav-icon">📋</span>一覧
+    </button>
+    <button class="nav-btn" id="nav-add" onclick="switchTab('add')">
+      <span class="nav-icon">＋</span>追加
+    </button>
+  </nav>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STORES_DEFAULT = ['Bスーパー','Cスーパー','Dホームセンター'];
+let db = JSON.parse(localStorage.getItem('pca-db') || 'null') || {
+  products: [
+    { id:1, barcode:'4901301371966', name:'猫砂 まとまる木のチップ 7L', memo:'固まるタイプ',
+      prices:[{store:'Bスーパー',regular:698,coupon:598},{store:'Cスーパー',regular:750,coupon:680},{store:'Dホームセンター',regular:648,coupon:null}] },
+    { id:2, barcode:'4903301157113', name:'システムトイレ 砂 3.8L', memo:'',
+      prices:[{store:'Bスーパー',regular:980,coupon:850},{store:'Cスーパー',regular:1050,coupon:null},{store:'Dホームセンター',regular:920,coupon:880}] }
+  ]
+};
+function save(){ localStorage.setItem('pca-db', JSON.stringify(db)); }
+
+let cameraStream = null;
+let storeRowCount = 0;
+
+function switchTab(name){
+  ['scan','list','add'].forEach(t=>{
+    document.getElementById('sec-'+t).classList.toggle('active', t===name);
+    document.getElementById('nav-'+t).classList.toggle('active', t===name);
+  });
+  if(name==='list') renderList();
+  if(name==='add') initForm();
+  if(name!=='scan') stopCamera();
+}
+
+function goAdd(){
+  switchTab('add');
+}
+
+// --- SCAN ---
+async function startCamera(){
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280}}});
+    cameraStream = stream;
+    const v = document.getElementById('camera-video');
+    v.srcObject = stream;
+    v.classList.add('active');
+    v.play();
+    document.getElementById('cam-placeholder').style.display='none';
+    document.getElementById('cam-overlay').style.display='flex';
+  } catch(e) {
+    showToast('カメラのアクセスを許可してください', true);
+  }
+}
+
+function stopCamera(){
+  if(!cameraStream) return;
+  cameraStream.getTracks().forEach(t=>t.stop());
+  cameraStream=null;
+  const v=document.getElementById('camera-video');
+  v.classList.remove('active');
+  document.getElementById('cam-placeholder').style.display='';
+  document.getElementById('cam-overlay').style.display='none';
+}
+
+function doSearch(){
+  const code = document.getElementById('bc-input').value.trim();
+  if(!code) return;
+  const p = db.products.find(x=>x.barcode===code);
+  renderResult(p, code);
+}
+
+function renderResult(p, code){
+  const el = document.getElementById('scan-result');
+  if(!p){
+    el.innerHTML = `<div class="not-found">
+      <div class="not-found-icon">🔍</div>
+      <p>「${code}」の商品が<br>見つかりませんでした</p>
+      <button class="add-from-scan" onclick="goAddWithBarcode('${code}')">この商品を登録する →</button>
+    </div>`;
+    return;
+  }
+  const best = Math.min(...p.prices.map(x=>x.coupon??x.regular));
+  const rows = p.prices.map(x=>{
+    const eff = x.coupon??x.regular;
+    const isBest = eff===best;
+    return `<div class="price-row${isBest?' best':''}">
+      <div class="store-name">${x.store}</div>
+      <div class="price-col">
+        ${x.coupon ? `<div class="price-regular"><span class="price-strike">¥${x.regular.toLocaleString()}</span></div>` : `<div class="price-regular">定価</div>`}
+        <div class="price-final${isBest?' best-price':''}">¥${eff.toLocaleString()}</div>
+      </div>
+      <div>${x.coupon?`<span class="coupon-badge">CP</span>`:''}${isBest?`<span class="best-badge">最安</span>`:''}</div>
+    </div>`;
+  }).join('');
+  el.innerHTML = `<div class="result-card">
+    <div class="result-header">
+      <div class="result-name">${p.name}</div>
+      <div class="result-barcode">${p.barcode}</div>
+      ${p.memo?`<div class="result-memo">${p.memo}</div>`:''}
+    </div>
+    <div class="price-rows">${rows}</div>
+  </div>`;
+}
+
+function goAddWithBarcode(code){
+  switchTab('add');
+  document.getElementById('f-barcode').value = code;
+}
+
+// --- LIST ---
+function renderList(){
+  const el = document.getElementById('product-list');
+  if(!db.products.length){
+    el.innerHTML=`<div class="empty-state"><div class="empty-icon">📦</div><div class="empty-text">商品がまだありません<br>「追加」タブから登録してください</div></div>`;
+    return;
+  }
+  el.innerHTML = db.products.map(p=>{
+    const prices = p.prices.map(x=>x.coupon??x.regular);
+    const min = Math.min(...prices), max = Math.max(...prices);
+    return `<div class="product-item" onclick="loadProduct('${p.barcode}')">
+      <div class="product-item-icon">🛒</div>
+      <div class="product-item-info">
+        <div class="product-item-name">${p.name}</div>
+        <div class="product-item-barcode">${p.barcode}</div>
+      </div>
+      <div class="product-item-prices">
+        <div class="price-range-label">最安</div>
+        <div class="price-range-min">¥${min.toLocaleString()}</div>
+        ${min!==max?`<div class="price-range-max">〜¥${max.toLocaleString()}</div>`:''}
+      </div>
+      <span class="chevron">›</span>
+    </div>`;
+  }).join('');
+}
+
+function loadProduct(barcode){
+  switchTab('scan');
+  document.getElementById('bc-input').value = barcode;
+  const p = db.products.find(x=>x.barcode===barcode);
+  renderResult(p, barcode);
+}
+
+// --- ADD FORM ---
+function initForm(barcode=''){
+  storeRowCount = 0;
+  document.getElementById('f-barcode').value = barcode;
+  document.getElementById('f-name').value = '';
+  document.getElementById('f-memo').value = '';
+  document.getElementById('store-list').innerHTML = '';
+  STORES_DEFAULT.forEach(s=>addStoreRow(s));
+}
+
+function addStoreRow(name=''){
+  const id = storeRowCount++;
+  const div = document.createElement('div');
+  div.className = 'store-card'; div.id='sr-'+id;
+  div.innerHTML=`<div class="store-card-header">
+    <input class="store-card-name" placeholder="店舗名" value="${name}">
+    <button class="remove-store-btn" onclick="document.getElementById('sr-${id}').remove()">✕</button>
+  </div>
+  <div class="store-price-row">
+    <div class="price-input-wrap">
+      <div class="price-input-label">定価（円）</div>
+      <input class="price-input regular" type="number" inputmode="numeric" placeholder="0">
+    </div>
+    <div class="price-input-wrap">
+      <div class="price-input-label">クーポン価格（円）</div>
+      <input class="price-input coupon" type="number" inputmode="numeric" placeholder="なし">
+    </div>
+  </div>`;
+  document.getElementById('store-list').appendChild(div);
+}
+
+function saveProduct(){
+  const barcode = document.getElementById('f-barcode').value.trim();
+  const name = document.getElementById('f-name').value.trim();
+  if(!barcode||!name){ showToast('バーコードと商品名は必須です', true); return; }
+  const rows = document.querySelectorAll('#store-list .store-card');
+  const prices = [];
+  rows.forEach(r=>{
+    const store = r.querySelector('.store-card-name').value.trim();
+    const regular = parseInt(r.querySelector('.regular').value)||0;
+    const cv = r.querySelector('.coupon').value;
+    const coupon = cv ? parseInt(cv) : null;
+    if(store && regular) prices.push({store,regular,coupon});
+  });
+  if(!prices.length){ showToast('1店舗以上の価格を入力してください', true); return; }
+  const idx = db.products.findIndex(p=>p.barcode===barcode);
+  const product = {id:Date.now(), barcode, name, memo:document.getElementById('f-memo').value.trim(), prices};
+  if(idx>=0) db.products[idx]=product; else db.products.push(product);
+  save();
+  showToast('✅ 保存しました');
+  switchTab('scan');
+  document.getElementById('bc-input').value=barcode;
+  renderResult(product,barcode);
+}
+
+function showToast(msg, err=false){
+  const t = document.getElementById('toast');
+  t.textContent=msg;
+  t.style.background=err?'#f87171':'#4ade80';
+  t.style.color=err?'#fff':'#000';
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+// PWA install prompt (Android)
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); deferredPrompt=e; });
+
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+
+initForm();
+</script>
+</body>
+</html>
